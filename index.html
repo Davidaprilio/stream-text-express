@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Teks LIKE Chat GPT</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            padding: 10px;
+        }
+        #text {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #aaa;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        #text p {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: antiquewhite;
+            border-radius: 6px;
+            border: 1px solid lemonchiffon;
+        }
+        #text p.typing::after {
+            content: '▮';
+            display: inline-block;
+            clear: both;
+            color: #aaa;
+            padding-left: 5px;
+            animation: cursorBlink 1s steps(1) infinite;
+        }
+        button {
+            padding: 5px 10px;
+            border-radius: 6px;
+        }
+        @keyframes cursorBlink {
+            0% {
+                opacity: 0;
+            }
+            25% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+            75% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Stream Text</h1>
+    <div id="text"></div>
+    <div style="text-align: center;">
+        <button>Load</button>
+    </div>
+
+    <script>
+        const decoder = new TextDecoder();
+        const text = document.getElementById('text');
+        const btn = document.querySelector('button');
+        const url = '/stream';
+        let isTyping = false;
+        async function run(params) {
+            isTyping = true;
+            btn.disabled = true;
+            const response = await fetch(url);
+            // Periksa apakah respons mendukung ReadableStream
+            if (!response.body) {
+                throw new Error('ReadableStream not supported');
+            }
+            // Dapatkan ReadableStream
+            const reader = response.body.getReader();
+            // Baca data secara streaming
+            textContainer = document.createElement('p');
+            textContainer.classList.add('typing')
+            text.appendChild(textContainer);
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    isTyping = false;
+                    btn.disabled = false;
+                    textContainer.classList.remove('typing');
+                    break;
+                }
+    
+                // Lakukan sesuatu dengan data yang dibaca
+                const teks = decoder.decode(value)
+
+                textContainer.appendChild(document.createTextNode(teks));
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+        }
+
+        btn.addEventListener('click', () => {
+            if (isTyping) return
+            run();
+        });
+
+        run();
+    </script>
+</body>
+
+</html>
